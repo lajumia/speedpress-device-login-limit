@@ -1,10 +1,10 @@
 <?php
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) exit;
 
-delete_option( 'spdll_device_limit' );
+delete_option( 'wpdll_device_limit' );
 
-$spdll_users = get_users();
-foreach ( $spdll_users as $spdll_user ) {
-    delete_user_meta( $spdll_user->ID, 'spdll_allowed_devices' );
-    delete_user_meta( $spdll_user->ID, 'spdll_device_otp' );
+$wpdll_users = get_users();
+foreach ( $wpdll_users as $wpdll_user ) {
+    delete_user_meta( $wpdll_user->ID, 'wpdll_allowed_devices' );
+    delete_user_meta( $wpdll_user->ID, 'wpdll_device_otp' );
 }
