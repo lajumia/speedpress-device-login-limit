@@ -1,6 +1,6 @@
-# WP Device Login Limit
+# SpeedPress Device Login Limit
 
-WP Device Login Limit allows site owners to restrict user logins to a fixed number of trusted devices.  
+SpeedPress Device Login Limit allows site owners to restrict user logins to a fixed number of trusted devices.  
 Once the device limit is reached, users can only log in from their registered devices unless an admin resets their device access.
 
 This plugin is ideal for:
@@ -44,7 +44,7 @@ This plugin is ideal for:
 ## ⚙️ Installation
 
 1. Upload the plugin folder to `/wp-content/plugins/`
-2. Activate **WP Device Login Limit**
+2. Activate **SpeedPress Device Login Limit**
 3. Go to **Settings → Device Login Limit**
 4. Set the maximum allowed devices
 
@@ -71,4 +71,4 @@ This plugin is ideal for:
 - View registered devices using shortcode:
 
 ```text
-[wpdll_my_devices]
+[spdll_my_devices]

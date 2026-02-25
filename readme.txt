@@ -1,6 +1,6 @@
-=== WP Device Login Limit ===
+=== SpeedPress Device Login Limit ===
 Contributors: devlaju
-Tags: security, login, device limit, user access
+Tags: security, login, device limit, user access,
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
@@ -10,7 +10,7 @@ License: GPLv2 or later
 A plugin to limit users to a fixed number of devices and verify new devices via OTP.
 
 == Description ==
-Limit users to logging in from a fixed number of devices. Devices are whitelisted. New devices require email OTP verification, and admins can reset devices per user.
+Limit users to logging in from a fixed number of devices. Devices are whitelisted, new devices require email OTP verification, and admins can reset devices per user.
 
 
 == Features ==
@@ -19,7 +19,7 @@ Limit users to logging in from a fixed number of devices. Devices are whiteliste
 * OTP verification for new devices
 * OTP expiry configurable (default 10 minutes)
 * Admin reset device access per user
-* Frontend shortcode to display user devices: [wpdll_my_devices]
+* Frontend shortcode to display user devices: [spdll_my_devices]
 * Automatic redirect for verified devices
 * WooCommerce login compatible
 
@@ -34,7 +34,7 @@ We strongly recommend installing one of the following SMTP plugins:
 
 - WP Mail SMTP
 
-Without SMTP, OTP emails may fail on many hosting environments. We strongly recommend configuring SMTP before using the plugin.
+Without SMTP, OTP emails may fail on many hosting environments.
 
 
 == Frequently Asked Questions ==
@@ -56,7 +56,7 @@ By default, OTP codes expire after 10 minutes. Users must enter the OTP within t
 3. Plugin settings page
 
 == Shortcodes ==
-* `[wpdll_my_devices]` – Display a list of registered devices for the current user on the frontend.
+* `[spdll_my_devices]` – Display a list of registered devices for the current user on the frontend.
 
 == Changelog ==
 = 1.0.0 =
