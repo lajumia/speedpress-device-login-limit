@@ -1,6 +1,6 @@
 === SpeedPress Device Login Limit ===
 Contributors: devlaju
-Tags: security, login, device limit, user access,
+Tags: security, login, device limit, user access
 Requires at least: 6.0
 Tested up to: 6.9
 Requires PHP: 7.4
@@ -26,11 +26,12 @@ Limit users to logging in from a fixed number of devices. Devices are whiteliste
 == Installation ==
 1. Upload the plugin to `/wp-content/plugins/`.
 2. Activate the plugin via the 'Plugins' menu in WordPress.
-3. Go to **Settings → Device Login Limit** to set the maximum number of devices per user.
+3. Go to **Settings → SpeedPress Device Limit** to set the maximum number of devices per user.
 
 == Email Delivery (Important) ==
-This plugin relies on email delivery for OTP verification.
-We strongly recommend installing one of the following SMTP plugins:
+This plugin relies on WordPress email functionality for OTP delivery.
+
+If your hosting environment does not reliably send emails, we recommend installing and configuring a proper SMTP plugin.
 
 - WP Mail SMTP
 
