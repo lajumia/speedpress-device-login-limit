@@ -28,11 +28,13 @@ final class SPDLL_Device_Login_Limit {
 
     public function __construct() {
         // Load function on plugin registration
-        register_activation_hook( __FILE__, [ $this, 'plugin_activation' ] );
+        register_activation_hook( __FILE__, [ $this, 'spdll_plugin_activation' ] );
+
+        add_action( 'wp_enqueue_scripts', [ $this, 'spdll_load_public_assets' ] );
 
         // Enqueue script for admin page
         add_action('admin_enqueue_scripts', [ $this, 'spdll_load_admin_assets' ]);
-
+    
         // Create OTP page on activation & init
         add_action( 'init', [ $this, 'spdll_create_otp_page' ] );
         
@@ -51,14 +53,12 @@ final class SPDLL_Device_Login_Limit {
         // User profile devices
         add_action( 'show_user_profile', [ $this, 'spdll_user_profile_devices' ] );
         add_action( 'edit_user_profile', [ $this, 'spdll_user_profile_devices' ] );
-        add_action( 'personal_options_update', [ $this, 'spdll_save_user_profile' ] );
-        add_action( 'edit_user_profile_update', [ $this, 'spdll_save_user_profile' ] );
 
         // Delete the device form admin
         add_action('wp_ajax_spdll_delete_device', [ $this, 'spdll_delete_device_callback' ]);
     }
 
-    public function plugin_activation() {
+    public function spdll_plugin_activation() {
         // 1. Check SMTP and block activation if missing
         $this->spdll_check_smtp_on_activation();
 
@@ -154,8 +154,33 @@ final class SPDLL_Device_Login_Limit {
             '1.0.0',
             true
         );
+        wp_enqueue_script(
+            'spdll-public-js',
+            plugin_dir_url(__FILE__) . 'assets/js/spdll-public.js',
+            ['jquery'],
+            '1.0.0',
+            true
+        );
+        wp_localize_script(
+            'spdll-admin-js',
+            'spdll_ajax',
+            [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce'    => wp_create_nonce('spdll_delete_device_nonce')
+            ]
+        );
     }
     
+    public function spdll_load_public_assets() {
+        wp_enqueue_script(
+            'spdll-public-js',
+            plugin_dir_url(__FILE__) . 'assets/js/spdll-public.js',
+            ['jquery'],
+            '1.0.0',
+            true
+        );
+    }
+
     /**
      * Check if SMTP is active in admin notices
      */
@@ -183,13 +208,80 @@ final class SPDLL_Device_Login_Limit {
         // Get admin email
         $admin_email = get_option( 'admin_email' );
 
-        // Compose test email
-        $subject = __( 'WP Device Login Limit: Test Email', 'speedpress-device-login-limit' );
-        $message = __( 'This is a test email to verify that your SMTP settings are working correctly.', 'speedpress-device-login-limit' );
-        $headers = [ 'Content-Type: text/plain; charset=UTF-8' ];
+        // Compose subject
+        $subject = __( 'Test Email from SpeedPress Device Login Limit ', 'speedpress-device-login-limit' );
 
-        // Try sending the email
+        // Get current year safely
+        $current_year = esc_html( wp_date( 'Y' ) );
+
+        // Compose HTML message based on your professional email template
+        $message = sprintf(
+            /* Translators: %1$s is the site name, %2$s is the current year */
+            __(
+                '<div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;background:#eef2f7;padding:20px;">
+                    <!-- Header -->
+                    <table width="100%%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#4e73df,#1cc88a);color:#ffffff;border-radius:12px;padding:30px;">
+                        <tr>
+                            <td>
+                                <h1 style="margin:0;font-size:28px;font-weight:bold;">SpeedPress</h1>
+                                <p style="margin:5px 0 15px;font-size:16px;">Secure, Accelerate & Optimize Your WordPress Site</p>
+                                <a href="https://wpspeedpress.com" style="display:inline-block;margin-top:20px;background:#ffffff;color:#1cc88a;text-decoration:none;font-weight:bold;padding:12px 25px;border-radius:6px;">Visit SpeedPress</a>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Content Card -->
+                    <table width="100%%" cellpadding="0" cellspacing="0" border="0" style="padding:30px 0;">
+                        <tr>
+                            <td align="center">
+                                <table width="480" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.08);padding:40px 30px;">
+                                    <tr>
+                                        <td style="text-align:center;">
+                                            <h2 style="margin:0;color:#2c3e50;font-size:24px;">SMTP Test Email</h2>
+                                            <p style="margin:15px 0 0;font-size:15px;color:#555;">Hello Admin,</p>
+                                            <p style="margin:10px 0 0;font-size:15px;color:#555;">
+                                                This is a test email to verify that your email delivery settings are working correctly. 
+                                                If you see this styled email, your SMTP or mail setup is functioning properly.
+                                            </p>
+                                            <p style="margin:20px 0 0;font-size:15px;color:#555;">
+                                                This email is generated by <strong>SpeedPress Device Login Limit</strong> plugin.
+                                            </p>
+                                            <a href="https://wpspeedpress.com" style="margin-top:30px;display:inline-block;background:#1cc88a;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 30px;border-radius:8px;">Go to SpeedPress</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Footer -->
+                    <table width="100%%" cellpadding="0" cellspacing="0" border="0" style="background:#2c3e50;padding:30px;border-radius:12px;color:#ffffff;">
+                        <tr>
+                            <td>
+                                <p style="margin:0;font-size:14px;line-height:20px;">
+                                    SpeedPress – All-in-one WordPress optimization & security tool.
+                                </p>
+                                <p style="margin-top:15px;font-size:12px;color:#aaa;">
+                                    &copy; %2$s %1$s. All rights reserved.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>',
+                'speedpress-device-login-limit'
+            ),
+            esc_html( get_bloginfo( 'name' ) ), // %1$s => Site Name
+            esc_html( $current_year )           // %2$s => Current Year
+        );
+
+        // Set headers for HTML email
+        $headers = [
+            'Content-Type: text/html; charset=UTF-8',
+        ];
+
+        // Send the email
         $sent = wp_mail( $admin_email, $subject, $message, $headers );
+
 
         // If failed → deactivate plugin & show error
         if ( ! $sent ) {
@@ -396,24 +488,51 @@ final class SPDLL_Device_Login_Limit {
 
         // Render OTP form
         ob_start(); ?>
-        <div class="spdll-otp-wrapper" style="display:flex;justify-content:center;align-items:center;height:80vh;">
-            <form method="post" class="spdll-otp-card" style="max-width:400px;width:100%;padding:30px;background:#fff;border-radius:10px;box-shadow:0 5px 20px rgba(0,0,0,0.1);text-align:center;">
-                <h2 style="margin-bottom:10px;"><?php esc_html_e( 'Verify Device', 'speedpress-device-login-limit' ); ?></h2>
-                <p style="margin-bottom:20px;"><?php esc_html_e('A verification code has been sent to your email address.', 'speedpress-device-login-limit');?></p>
-                
+        <div class="spdll-otp-wrapper" style="display:flex;justify-content:center;align-items:center;min-height:80vh;background:#eef2f7;padding:20px;font-family:Arial, sans-serif;">
+
+            <form method="post" class="spdll-otp-card" style="max-width:420px;width:100%;background:#ffffff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.08);padding:40px 30px;text-align:center;">
+
+                <!-- Header: Brand + Info -->
+                <div style="margin-bottom:25px;">
+                    <h1 style="margin:0;font-size:26px;color:#1cc88a;font-weight:bold;">SpeedPress</h1>
+                    <p style="margin:5px 0 0;font-size:15px;color:#555;">Secure, Accelerate & Optimize Your WordPress Site</p>
+                </div>
+
+                <!-- OTP Info -->
+                <h2 style="margin:20px 0 10px;font-size:22px;color:#2c3e50;">Verify Your Device</h2>
+                <p style="margin:0 0 20px;font-size:14px;color:#666;">
+                    We sent a verification code to your email. Enter it below to continue.
+                </p>
+
+                <!-- Error Message -->
                 <?php if ( $error ) : ?>
-                    <p class="spdll-error" style="color:#d63638;margin-bottom:15px;"><?php echo esc_html( $error ); ?></p>
+                    <p class="spdll-error" style="color:#d63638;margin-bottom:15px;font-weight:bold;"><?php echo esc_html( $error ); ?></p>
                 <?php endif; ?>
 
                 <?php wp_nonce_field( 'spdll_verify_otp' ); ?>
                 <input type="hidden" name="log" value="<?php echo esc_attr( $username ); ?>">
 
-                <input type="number" name="spdll_otp" required placeholder="123456" style="width:100%;padding:12px;margin-bottom:15px;border-radius:6px;border:1px solid #ccc;text-align:center;">
+                <!-- OTP Input -->
+                <input type="number" name="spdll_otp" required placeholder="Enter 6-digit code" 
+                    style="width:100%;padding:14px;margin-bottom:20px;border-radius:8px;border:1px solid #ccc;font-size:16px;text-align:center;box-sizing:border-box;">
 
-                <button name="spdll_verify_otp" style="width:100%;padding:12px;border:none;border-radius:6px;background:#2271b1;color:#fff;font-weight:bold;cursor:pointer;">
-                    <?php esc_html_e( 'Verify & Continue', 'speedpress-device-login-limit' ); ?>
+                <!-- Countdown Timer -->
+                <p id="spdll-countdown" style="margin:0 0 20px;font-size:14px;color:#888;">
+                    <strong>Time remaining: 10:00</strong>
+                </p>
+
+                <!-- Submit Button -->
+                <button name="spdll_verify_otp" style="width:100%;padding:14px;border:none;border-radius:8px;background:#1cc88a;color:#ffffff;font-weight:bold;font-size:16px;cursor:pointer;transition:all 0.3s ease;">
+                    Verify & Continue
                 </button>
+
+                <!-- Footer: Links & Info -->
+                <div style="margin-top:25px;font-size:12px;color:#aaa;">
+                    Need help? Contact <a href="mailto:developerlaju@gmail.com" style="color:#1cc88a;text-decoration:none;">Plugin Support</a><br>
+                    &copy; <?php echo esc_html( wp_date( 'Y' ) ); ?> SpeedPress. All rights reserved.
+                </div>
             </form>
+
         </div>
         <?php
         return ob_get_clean();
@@ -579,24 +698,160 @@ final class SPDLL_Device_Login_Limit {
                 'device_type' => $device_type,
             ] );
 
-            $subject = __( 'Verify New Device Login', 'speedpress-device-login-limit' );
+            $subject = __('Your Login Verification Code', 'speedpress-device-login-limit');
 
-            $message = sprintf(
-                __(
-                    /* Translators: 
-                    %1$s is the user's display name, 
-                    %2$s is the OTP verification code. 
-                    */
-                    "Hello %1\$s,\n\nYour verification code is: %2\$s\n\nThis code will expire shortly.\n\nIf you did not request this login, please ignore this email.",
-                    'speedpress-device-login-limit'
-                ),
-                $user->display_name,
-                $otp
+
+            // Prepare dynamic values safely.
+            $user_name  = esc_html( $user->display_name );
+            $otp_code   = esc_html( $otp );
+            $site_name  = esc_html( get_bloginfo( 'name' ) );
+            $year       = esc_html( wp_date( 'Y' ) );
+
+            // Translatable strings.
+            
+            $hello_text = sprintf(
+                /* translators: 1: User display name */
+                __( 'Hello %1$s,', 'speedpress-device-login-limit' ),
+                $user_name
             );
+
+            $verification_text = __(
+                'We detected a login attempt from a new device. Use the verification code below to continue:',
+                'speedpress-device-login-limit'
+            );
+
+            $expiry_text = __(
+                'This code expires in 10 minutes.',
+                'speedpress-device-login-limit'
+            );
+
+            $login_heading = __(
+                'Login Verification',
+                'speedpress-device-login-limit'
+            );
+
+            $explore_button = __(
+                'Explore Features',
+                'speedpress-device-login-limit'
+            );
+
+            $get_started_button = __(
+                'Get Started with SpeedPress',
+                'speedpress-device-login-limit'
+            );
+
+            $brand_tagline = __(
+                'Secure, Accelerate & Optimize Your WordPress Site',
+                'speedpress-device-login-limit'
+            );
+
+            $footer_desc = __(
+                'SpeedPress – All-in-one WordPress optimization & security tool.',
+                'speedpress-device-login-limit'
+            );
+
+            $support_label = __(
+                'Support:',
+                'speedpress-device-login-limit'
+            );
+
+            $all_rights = sprintf(
+                /* translators: 1: Current year */
+                __( '© %1$s SpeedPress. All rights reserved.', 'speedpress-device-login-limit' ),
+                $year
+            );
+
+            // Build email message.
+            $message = '
+            <div style="max-width:600px;margin:0 auto;font-family:Arial,sans-serif;background:#eef2f7;padding:20px;">
+
+                <!-- Header -->
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg,#4e73df,#1cc88a);color:#ffffff;border-radius:12px;padding:30px;">
+                    <tr>
+                        <td>
+                            <h1 style="margin:0;font-size:28px;font-weight:bold;">SpeedPress</h1>
+                            <p style="margin:5px 0 15px;font-size:16px;">' . esc_html( $brand_tagline ) . '</p>
+
+                            <p style="font-size:14px;color:#f1f3f5;line-height:20px;">
+                                🚀 Boost your website speed with SpeedPress Premium Features.<br>
+                                🔒 Secure your login and devices with advanced protections.<br>
+                                🌐 Visit our website:
+                                <a href="https://wpspeedpress.com" style="color:#ffffff;text-decoration:underline;">www.wpspeedpress.com</a>
+                            </p>
+
+                            <a href="https://wpspeedpress.com"
+                            style="display:inline-block;margin-top:20px;background:#ffffff;color:#1cc88a;text-decoration:none;font-weight:bold;padding:12px 25px;border-radius:6px;">
+                            ' . esc_html( $get_started_button ) . '
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- OTP Card -->
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="padding:30px 0;">
+                    <tr>
+                        <td align="center">
+                            <table width="480" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.08);padding:40px 30px;">
+                                <tr>
+                                    <td style="text-align:center;">
+                                        <h2 style="margin:0;color:#2c3e50;font-size:24px;">' . esc_html( $login_heading ) . '</h2>
+
+                                        <p style="margin:15px 0 0;font-size:15px;color:#555;">
+                                            ' . $hello_text . '
+                                        </p>
+
+                                        <p style="margin:10px 0 0;font-size:15px;color:#555;">
+                                            ' . esc_html( $verification_text ) . '
+                                        </p>
+
+                                        <div style="margin:30px 0;text-align:center;">
+                                            <span style="display:inline-block;font-size:32px;font-weight:bold;letter-spacing:5px;background:#f1f3f8;padding:20px 35px;border-radius:10px;color:#2c3e50;box-shadow:0 5px 15px rgba(0,0,0,0.1);">
+                                                ' . $otp_code . '
+                                            </span>
+                                        </div>
+
+                                        <p style="margin:0;font-size:14px;color:#888;">
+                                            ' . esc_html( $expiry_text ) . '
+                                        </p>
+
+                                        <a href="https://wpspeedpress.com/"
+                                        style="margin-top:30px;display:inline-block;background:#1cc88a;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 30px;border-radius:8px;">
+                                        ' . esc_html( $explore_button ) . '
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Footer -->
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#2c3e50;padding:30px;border-radius:12px;color:#ffffff;">
+                    <tr>
+                        <td>
+                            <p style="margin:0;font-size:14px;line-height:20px;">
+                                ' . esc_html( $footer_desc ) . '
+                            </p>
+
+                            <p style="margin:15px 0 0;font-size:12px;">
+                                ' . esc_html( $support_label ) . '
+                                <a href="mailto:developerlaju@gmail.com" style="color:#1cc88a;">
+                                    developerlaju@gmail.com
+                                </a>
+                            </p>
+
+                            <p style="margin-top:20px;font-size:12px;color:#aaa;">
+                                ' . esc_html( $all_rights ) . '
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>';
 
 
             $headers = array(
-                'Content-Type: text/plain; charset=UTF-8',
+                'Content-Type: text/html; charset=UTF-8',
             );
 
             $sent_email = wp_mail(
@@ -686,82 +941,128 @@ final class SPDLL_Device_Login_Limit {
 
         $devices = get_user_meta( $user->ID, SPDLL_ALLOWED_DEVICES, true );
         ?>
-        <h2 style="margin-top:30px;"><?php esc_html_e( 'Device Login Limit', 'speedpress-device-login-limit' ); ?></h2>
-        <p style="margin-bottom:15px; color:#555;">
-            <?php esc_html_e( 'List of all devices that have accessed this user account. You can delete devices or monitor status.', 'speedpress-device-login-limit' ); ?>
-        </p>
+        <h2 style="margin-top:40px;">
+            <?php esc_html_e( 'Device Login Limit', 'speedpress-device-login-limit' ); ?>
+        </h2>
+        <div style="
+            background:#f6f7f9;
+            padding:25px;
+            border-radius:8px;
+            border:1px solid #e1e4e8;
+            margin-top:15px;
+        ">
+
+            <p style="margin-top:0;margin-bottom:20px;color:#555;font-size:14px;">
+                <?php esc_html_e( 'List of all devices that have accessed this user account. You can delete devices or monitor status.', 'speedpress-device-login-limit' ); ?>
+            </p>
 
         <?php if ( ! is_array( $devices ) || empty( $devices ) ) : ?>
-            <p style="color:#555;font-style:italic;"><?php esc_html_e( 'No devices registered yet.', 'speedpress-device-login-limit' ); ?></p>
-        <?php else : ?>
-            <table class="wp-list-table widefat fixed striped">
-                <thead>
-                    <tr>
 
-                        <th><?php esc_html_e( 'Device', 'speedpress-device-login-limit' ); ?></th>
-                        <th><?php esc_html_e( 'User Agent', 'speedpress-device-login-limit' ); ?></th>                
-                        <th><?php esc_html_e( 'Last Login', 'speedpress-device-login-limit' ); ?></th>
-                        <th><?php esc_html_e( 'IP Address', 'speedpress-device-login-limit' ); ?></th>
-                        <th><?php esc_html_e( 'Status', 'speedpress-device-login-limit' ); ?></th>
-                        <th><?php esc_html_e( 'Actions', 'speedpress-device-login-limit' ); ?></th>
+            <p style="color:#777;font-style:italic;margin:0;">
+                <?php esc_html_e( 'No devices registered yet.', 'speedpress-device-login-limit' ); ?>
+            </p>
+
+        <?php else : ?>
+
+            <table style="
+                width:100%;
+                border-collapse:collapse;
+                background:#ffffff;
+                font-size:14px;
+            ">
+                <thead>
+                    <tr style="background:#f1f3f5;border-bottom:1px solid #e1e4e8;">
+                        <th style="text-align:left;padding:12px 14px;font-weight:600;color:#333;">
+                            <?php esc_html_e( 'Device', 'speedpress-device-login-limit' ); ?>
+                        </th>
+                        <th style="text-align:left;padding:12px 14px;font-weight:600;color:#333;">
+                            <?php esc_html_e( 'User Agent', 'speedpress-device-login-limit' ); ?>
+                        </th>
+                        <th style="text-align:left;padding:12px 14px;font-weight:600;color:#333;">
+                            <?php esc_html_e( 'Last Login', 'speedpress-device-login-limit' ); ?>
+                        </th>
+                        <th style="text-align:left;padding:12px 14px;font-weight:600;color:#333;">
+                            <?php esc_html_e( 'IP Address', 'speedpress-device-login-limit' ); ?>
+                        </th>
+                        <th style="text-align:center;padding:12px 14px;font-weight:600;color:#333;">
+                            <?php esc_html_e( 'Status', 'speedpress-device-login-limit' ); ?>
+                        </th>
+                        <th style="text-align:center;padding:12px 14px;font-weight:600;color:#333;">
+                            <?php esc_html_e( 'Actions', 'speedpress-device-login-limit' ); ?>
+                        </th>
                     </tr>
                 </thead>
+
                 <tbody>
-                    <?php foreach ( $devices as $index => $device ) : 
-                        $status = isset( $device['status'] ) ? ucfirst( $device['status'] ) : 'Unknown';
-                        $status_color = ($status === 'Approved') ? '#27ae60' : '#d63638';
-                        $time = ! empty( $device['time'] ) ? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $device['time'] ) : esc_html__( 'Unknown', 'speedpress-device-login-limit' );
-                        $ip = isset( $device['ip_address'] ) ? esc_html( $device['ip_address'] ) : '-';
-                        $device_type = isset( $device['device_type'] ) ? esc_html( $device['device_type'] ) : 'Unknown';
-                    ?>
-                        <tr>
-                            <td style="font-family:monospace;"><?php echo esc_html( $device_type ); ?></td>
-                            <td><?php echo esc_html( $device['agent'] ); ?></td>
-                            <td><?php echo esc_html( $time ); ?></td>
-                            <td><?php echo esc_html( $ip ); ?></td>
-                            <td>
-                                <span style="display:inline-block;padding:3px 8px;font-size:12px;font-weight:bold;border-radius:4px;color:#fff;background:<?php echo esc_attr( $status_color ); ?>;">
-                                    <?php echo esc_html( $status ); ?>
-                                </span>
-                            </td>
-                            <td>
-                                <a href="#" class="spdll-delete-device" data-user-id="<?php echo esc_attr( $user->ID ); ?>" data-device-id="<?php echo esc_attr( $device['id'] ); ?>" style="color:#d63638;font-weight:bold;text-decoration:none;font-size:25px;padding:5px 15px;">
-                                    &#x1F5D1; <!-- trash icon -->
-                                </a>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
+                <?php foreach ( $devices as $index => $device ) :
+
+                    $status = isset( $device['status'] ) ? ucfirst( $device['status'] ) : 'Unknown';
+                    $status_color = ($status === 'Approved') ? '#16a34a' : '#dc2626';
+                    $time = ! empty( $device['time'] )
+                        ? date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $device['time'] )
+                        : esc_html__( 'Unknown', 'speedpress-device-login-limit' );
+                    $ip = isset( $device['ip_address'] ) ? esc_html( $device['ip_address'] ) : '-';
+                    $device_type = isset( $device['device_type'] ) ? esc_html( $device['device_type'] ) : 'Unknown';
+                ?>
+
+                    <tr style="border-bottom:1px solid #edf0f2;">
+                        <td style="padding:12px 14px;font-family:monospace;color:#333;">
+                            <?php echo esc_html( $device_type ); ?>
+                        </td>
+
+                        <td style="padding:12px 14px;color:#555;max-width:280px;word-break:break-word;">
+                            <?php echo esc_html( $device['agent'] ); ?>
+                        </td>
+
+                        <td style="padding:12px 14px;color:#555;">
+                            <?php echo esc_html( $time ); ?>
+                        </td>
+
+                        <td style="padding:12px 14px;color:#555;">
+                            <?php echo esc_html( $ip ); ?>
+                        </td>
+
+                        <td style="padding:12px 14px;text-align:center;">
+                            <span style="
+                                display:inline-block;
+                                padding:4px 10px;
+                                font-size:12px;
+                                font-weight:600;
+                                border-radius:20px;
+                                color:#fff;
+                                background:<?php echo esc_attr( $status_color ); ?>;
+                            ">
+                                <?php echo esc_html( $status ); ?>
+                            </span>
+                        </td>
+
+                        <td style="padding:12px 14px;text-align:center;">
+                            <a href="#"
+                            class="spdll-delete-device"
+                            data-user-id="<?php echo esc_attr( $user->ID ); ?>"
+                            data-device-id="<?php echo esc_attr( $device['id'] ); ?>"
+                            style="
+                                    display:inline-block;
+                                    color:#dc2626;
+                                    font-size:18px;
+                                    text-decoration:none;
+                                    transition:opacity .2s ease;
+                            "
+                            title="Delete Device">
+                                <span class="dashicons dashicons-trash"></span>
+                            </a>
+                        </td>
+                    </tr>
+
+                <?php endforeach; ?>
                 </tbody>
             </table>
+
         <?php endif; ?>
 
+        </div>
+
         <?php
-    }
-
-    public function spdll_save_user_profile( $user_id ) {
-
-        // Only allow admins
-        if ( ! current_user_can( 'manage_options' ) ) {
-            return;
-        }
-
-        // Verify nonce before processing form
-        if ( isset( $_POST['spdll_reset_devices'] ) && isset( $_POST['spdll_reset_devices_nonce'] ) ) {
-
-            if (
-                ! isset( $_POST['spdll_reset_devices_nonce'] ) ||
-                ! wp_verify_nonce(
-                    sanitize_text_field( wp_unslash( $_POST['spdll_reset_devices_nonce'] ) ),
-                    'spdll_reset_devices_action'
-                )
-            ) {
-                return;
-            }
-
-            // Safe to delete user meta
-            delete_user_meta( $user_id, SPDLL_ALLOWED_DEVICES );
-            delete_user_meta( $user_id, SPDLL_DEVICE_OTP );
-        }
     }
 
     /* -------------------------

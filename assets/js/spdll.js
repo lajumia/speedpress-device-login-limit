@@ -9,11 +9,12 @@
                             action: 'spdll_delete_device',
                             user_id: user_id,
                             device_id: device_id,
-                            _wpnonce: '<?php echo esc_js( wp_create_nonce("spdll_delete_device_nonce") ); ?>'
+                            _wpnonce: spdll_ajax.nonce
                         }, function(response){
                             if(response.success){
                                 location.reload();
                             } else {
+                                console.log(response.data);
                                 alert('Failed to delete device.');
                             }
                         });
